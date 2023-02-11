@@ -1,0 +1,38 @@
+
+------------------------------------------------------------For ASE----------------------------------------
+
+####################################################Full Time#####################################
+For ASE = 8.095790108044942 min
+For ASE in 2nd time = 7.076999735832213 min
+For ASE in 3nd time = 7.132195830345154 min
+Execution time 3rd: 7.306372102101644 min
+
+##################################################Encryption time###############################
+Encryption time for ASE = 0.0208877444267273 min
+Encryption time for ASE in 2nd time = 0.022775145371754964 min
+Execution time for encryption 3nd: 0.019735105832417808 min
+
+###################################################Deccryption Time###########################
+Deccryption time for ASE = 0.0230719765027364 min
+Deccryption time for ASE in 2nd time = 0.020858152707417806 min
+Execution time for Decryption 3rd: 0.020715272426605223 min
+
+------------------------------------------------------------For RSA----------------------------------------
+
+####################################################Full Time#####################################
+For RSA = 8.758301067352295 min
+For RSA in 2nd time = 7.678317507108052 min
+Execution time 3rd: 7.625970307985941 min
+
+##################################################Encryption time###############################
+Encryption time for RSA = 0.0212441921234131 min
+Encryption time for RSA in 2nd time = 0.023491652806599934 min
+Execution time for encryption 3rd : 0.02251720428466797 min
+
+###################################################Deccryption Time###########################
+Deccryption time for RSA = 0.1505234281222026 min
+Deccryption time for RSA in 2nd time =  min
+Execution time for Decryption 3rd: 0.14638032913208007 min
+
+------------------------------------------------------------For Combain of ASE and RSA----------------------------------------
+
