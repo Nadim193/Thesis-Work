@@ -4,6 +4,7 @@ import chardet
 import shutil
 import hashlib
 import json
+import time
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding
 from cryptography.hazmat.primitives import hashes
@@ -91,7 +92,7 @@ def upload_to_azure(encrypted_data_set):
     blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 
     # Create a container
-    container_name = "storedatausingblockchain"
+    container_name = "storedatausingblockchain8"
     try:
         container_client = blob_service_client.create_container(container_name)
     except:
@@ -169,10 +170,39 @@ def upload_to_azure(encrypted_data_set):
         print(f"An error occurred while deleting the folder: {e}")
     return None
 
+# Download Data From Azue
+def download_data():
+    # Connect to Azure Blob Storage
+    connect_str = "DefaultEndpointsProtocol=https;AccountName=storedatausingblockchain;AccountKey=XDX90enqsPIO19bfdMTpAWaHlN8w1ZCqUAyDKQ8Re5DQ+nGv8vzzJtBY4m/5jcJcx1+eJRjv9RYO+ASts9EL1g==;EndpointSuffix=core.windows.net"
+    blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+
+    # Create a container
+    container_name = "storedatausingblockchain6"
+    try:
+        container_client = blob_service_client.create_container(container_name)
+    except:
+        container_client = blob_service_client.get_container_client(container_name)
+    
+    # Download the encrypted data
+    blob_client = container_client.get_blob_client("EncryptData.json")
+    encrypted_data = blob_client.download_blob().readall()
+
+    # Convert the encrypted data to a list
+    encrypted_data_str = encrypted_data.decode()
+    encrypted_data_dict = json.loads(encrypted_data_str)
+    encrypted_data_bytes = bytes(encrypted_data_dict)
+    encrypted_data_list = list(encrypted_data_bytes)
+
+    return encrypted_data_list
+
+
 if __name__ == '__main__':
+    start_time3 = time.time()
     # Load data from CSV file
     data, header = load_csv_data('D:/Thesis Work/DataSet/30-70cancerChdEtc.csv')
-
+    
+    start_time = time.time()
+    
     # Generate RSA key pair
     private_key = rsa.generate_private_key(
         public_exponent=65537,
@@ -184,19 +214,29 @@ if __name__ == '__main__':
     # AES encryption
     key = os.urandom(32)
     iv = os.urandom(16)
+    
     encrypted_data_set = aes_encrypt(key,iv, data)
+    
     # RSA encryption
     encrypted_key = rsa_encrypt(public_key, key)
+    print("Execution time for encryption:", (time.time() - start_time)/60, "Min")
     
     # Upload To Azure
     upload_to_azure(encrypted_data_set)
+    
+    #Downoad to Azure
+    # encrypted_data_list = download_data()
 
-    # AES decryption
-    decrypted_data_set = aes_decrypt(key, iv, encrypted_data_set)
+    start_time2 = time.time()
 
     # RSA decryption
     decrypted_key = rsa_decrypt(private_key, encrypted_key)
     assert decrypted_key == key, 'Error: decrypted key does not match original key'
+    
+    # AES decryption
+    decrypted_data_set = aes_decrypt(decrypted_key, iv, encrypted_data_set)
+
+    print("Execution time for Decryption:", (time.time() - start_time2)/60, "Min")
 
     # Print decrypted data
     csv_file_path = "decrypted_data_set.csv"
@@ -216,3 +256,6 @@ if __name__ == '__main__':
                 writer.writerow(data)
     except Exception as e:
         print(f"An error occurred while writing the decrypted data to the CSV file: {e}")
+    
+    print("Execution time:", (time.time() - start_time3)/60, "Min")
+        

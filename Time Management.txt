@@ -34,5 +34,21 @@ Deccryption time for RSA = 0.1505234281222026 min
 Deccryption time for RSA in 2nd time =  min
 Execution time for Decryption 3rd: 0.14638032913208007 min
 
+------------------------------------------------------------For Combain of RSA and AES----------------------------------------
+Execution time for encryption: 0.05622946818669637 min
+Execution time for Decryption: 0.1858359177907308 min
+Execution time: 0.28215821186701456 min
+
+Execution time for encryption: 0.05650594234466553 Min
+Execution time for Decryption: 0.18671290079752603 Min
+Execution time: 0.24447528918584188 Min
+
 ------------------------------------------------------------For Combain of ASE and RSA----------------------------------------
 
+Execution time for encryption: 0.02312492529551188 min
+Execution time for Decryption: 0.020251035690307617 min
+Execution time: 1.8198250532150269 min
+
+Execution time for encryption: 0.02235237757364909 Min
+Execution time for Decryption: 0.020357640584309895 Min
+Execution time: 1.8545193076133728 Min

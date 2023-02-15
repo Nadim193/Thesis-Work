@@ -2,6 +2,7 @@ import csv
 import os
 import base64
 import hashlib
+import pickle
 import shutil
 import io
 import json
@@ -24,6 +25,8 @@ private_key = rsa.generate_private_key(
 public_key = private_key.public_key()
 
 def encrypt_data(data, public_key):
+    if isinstance(data, str):
+        data = data.encode()
     # Encrypt data using RSA
     encrypted_data = public_key.encrypt(
         data,
@@ -67,9 +70,9 @@ def upload_to_azure(encrypted_data_set):
     # Connect to Azure Blob Storage
     connect_str = "DefaultEndpointsProtocol=https;AccountName=storedatausingblockchain;AccountKey=XDX90enqsPIO19bfdMTpAWaHlN8w1ZCqUAyDKQ8Re5DQ+nGv8vzzJtBY4m/5jcJcx1+eJRjv9RYO+ASts9EL1g==;EndpointSuffix=core.windows.net"
     blob_service_client = BlobServiceClient.from_connection_string(connect_str)
-        
+
     # Create a container
-    container_name = "storedatausingblockchain13"
+    container_name = "storedatausingblockchain7"
     try:
         container_client = blob_service_client.create_container(container_name)
     except:
@@ -79,26 +82,30 @@ def upload_to_azure(encrypted_data_set):
     try:
         os.makedirs(folder_path, exist_ok=True)
     except Exception as e:
-        print(f"An error occurred while creating the temporary folder: {e}")
+        print(f"An error occurred while creating the folder: {e}")
 
     #Upload a single file to Azure Blob Storage
-    def upload_file(file_path, container_client, encrypted_data):
+    def upload_file(file_path, container_client):
         blob_client = container_client.get_blob_client(file_path)
-        blob_client.upload_blob(encrypted_data)
+        with open(file_path, "rb") as data:
+            blob_client.upload_blob(data.read(), max_size=4 * 1024 * 1024)  # set max_size to 4MB or another valid value
 
-    #Write encrypted data to separate files and upload them to Azure Blob Storage
+
+    # Upload the encrypted files to Azure Blob Storage
+    hashes = {}
     try:
         with ThreadPoolExecutor(max_workers=1000) as executor:
             futures = []
             for index, encrypted_data in enumerate(encrypted_data_set):
                 file_name = f"encrypted_data_{index}.bin"
                 file_path = os.path.join(folder_path, file_name)
-                futures.append(executor.submit(upload_file, file_path, container_client, encrypted_data))
+                with open(file_path, "wb") as file:
+                    file.write(bytes(encrypted_data))
+                futures.append(executor.submit(upload_file, [file_path], container_client))
             for future in futures:
                 future.result()
     except Exception as e:
         print(f"An error occurred while uploading the encrypted data to Azure Blob Storage: {e}")
-
 
 
     #Calculate the SHA-256 hash of a single file
@@ -116,13 +123,10 @@ def upload_to_azure(encrypted_data_set):
     hashes = {}
     try:
         with ThreadPoolExecutor(max_workers=1000) as executor:
-            futures_data = []
             for index in range(len(encrypted_data_set)):
                 file_name = F"encrypted_data_{index}.bin"
                 file_path = os.path.join(folder_path, file_name)
-                futures_data.append(executor.submit(calculate_sha256_hash, file_path, index, hashes))
-            for future in futures_data:
-                future.result()
+                executor.submit(calculate_sha256_hash, file_path, index, hashes)
     except Exception as e:
         print(f"An error occurred while calculating the SHA-256 hashes of the encrypted data files: {e}")
 
@@ -133,8 +137,7 @@ def upload_to_azure(encrypted_data_set):
             file.write(json.dumps(hashes))
     except Exception as e:
         print(f"An error occurred while saving the SHA-256 hashes to a JSON file: {e}")
-
-
+        
 
     #Upload the JSON file to Azure Blob Storage
     json_blob_client = container_client.get_blob_client(json_file_path)
@@ -143,9 +146,13 @@ def upload_to_azure(encrypted_data_set):
             json_blob_client.upload_blob(data)
     except Exception as e:
         print(f"An error occurred while uploading the JSON file to Azure Blob Storage: {e}")
-
-    #Clean up the temporary folder
-    shutil.rmtree(folder_path)
+    
+    # Clean up the temporary folder
+    try:
+        shutil.rmtree(folder_path)
+    except Exception as e:
+        print(f"An error occurred while deleting the folder: {e}")
+    return None
 
 def read_from_csv(file_path):
     # Read data from CSV file
@@ -174,7 +181,6 @@ def main():
     file_path = "D:/Thesis Work/DataSet/30-70cancerChdEtc.csv"
     
     data, header = read_from_csv(file_path)
-    print("Data read from CSV file:")
     # Generate AES key
     password = b"password"
     salt = os.urandom(16)
@@ -197,14 +203,14 @@ def main():
             encrypted_item = encrypt_aes(encrypted_item.decode(), aes_key)
             encrypted_row.append(encrypted_item)
         encrypted_data.append(encrypted_row)
-    
-    print("Encrypted Done")  
-    print("Execution time for encryption:", (time.time() - start_time)/60, "seconds")
+        
+    print("Execution time for encryption:", (time.time() - start_time)/60, "Min")
 
     
     # Upload encrypted data to Azure
-    upload_to_azure(encrypted_row)
-    print("Encrypted data uploaded to Azure")
+    # upload_to_azure(encrypted_data)
+    # print("Encrypted data uploaded to Azure")
+
 
     start_time2 = time.time()
     # Decrypt data using RSA and AES
@@ -217,14 +223,12 @@ def main():
             decrypted_row.append(item)
         decrypted_data.append(decrypted_row)
     
-    print("Deccrypted Done")
-    print("Execution time for Decryption:", (time.time() - start_time2)/60, "seconds")
+    print("Execution time for Decryption:", (time.time() - start_time2)/60, "Min")
 
     
     # Write decrypted data to CSV file
     write_to_csv("Decryption_Data.csv", decrypted_data, header)
-    print("Decrypted data written to CSV file")
-    print("Execution time:", (time.time() - start_time3)/60, "seconds")
+    print("Execution time:", (time.time() - start_time3)/60, "Min")
 
 
 if __name__ == "__main__":
